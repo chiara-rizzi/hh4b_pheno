@@ -7,7 +7,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument("-f","--file",help="file name", type=str, default="ggHH_smallR-jets.lhco")
 args=parser.parse_args()
 
-print("ok")
+print("Ciao! :) ")
 
 data = pd.read_csv(args.file, sep="\s+")
 #print(data)
