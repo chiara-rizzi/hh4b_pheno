@@ -44,11 +44,8 @@ eff['atlas']['XWt']=0.0175
 
 #n_events=0
 n_bjets=0 # count the number of b-tagged jets, to be set to zero at each event
-#n_events_4b=0 # number of events with 4b
-#n_events_dR=0 # number of events that pass dR selection
-#n_events_pT=0 # number of events that pass pT selection
-#n_events_eta=0 # number of events that pass eta selection
 bjets_event = [] # list of lorentz vectors of the b-jets in the event
+jets_event = [] # list of lorentz vectors of the jets in the event
 
 def pair_jets(bjets):
     #print("bjets[0].pt",bjets[0].pt)
@@ -173,7 +170,8 @@ for index, row in data.iterrows():
           if n_events['tot']%5000==0:
                print("Looking at event: "+str(n_events['tot']))
           # just finished previous event: check if it had >= 4 b-tagged jets, and compute quantities 
-          if (not args.exactly4b and n_bjets >=4) or n_bjets==4:
+          #if (not args.exactly4b and n_bjets >=4) or n_bjets==4:
+          if len(jets_event)<5 and n_bjets==4:
                n_events['4b']+=1
                i_h1, i_h2 = pair_jets(bjets_event) 
                h1 = bjets_event[i_h1[0]] + bjets_event[i_h1[1]]
