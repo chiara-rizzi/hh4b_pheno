@@ -125,6 +125,6 @@ print("N events: "+str(n_events))
 print("N events >=4 b-jets pt>40 GeV: "+str(n_events_4b))
 print("N events dR: "+str(n_events_dR))
 print("Acc x Eff 4b:", 1.0*n_events_4b/n_events * 1/(0.58*0.58))
-print("Acc x Eff 4b:", 1.0*n_events_dR/n_events * 1/(0.58*0.58))
+print("Acc x Eff dR:", 1.0*n_events_dR/n_events * 1/(0.58*0.58))
 
 
