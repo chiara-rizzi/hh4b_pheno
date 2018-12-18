@@ -18,13 +18,14 @@ def set_lv(pt, eta, phi, m):
      t = math.sqrt(x*x + y*y + z*z + m*m)
      return t,x,y,z
 
-
 data = pd.read_csv(args.file, sep="\s+")
+
 #print(data)
+# structude of the input file: 
 # #  typ      eta      phi      pt    jmas   ntrk   btag  had/em   dum1   dum2
 
 n_events=0
-n_bjets=0 #count the number of b-tagged jets, to be set to zero at each event
+n_bjets=0 # count the number of b-tagged jets, to be set to zero at each event
 n_events_4b=0 # number of events with 4b
 n_events_dR=0 # number of events with 4b
 bjets_event = [] # list of lorentz vectors of the b-jets in the event
@@ -45,6 +46,9 @@ def pair_jets(bjets):
              i_h2_appo = [i_h2_j1_appo, i_h2_j2_appo]
              h2_appo = bjets[i_h2_appo[0]] + bjets[i_h2_appo[1]]
              diff_appo = math.fabs(h1_appo.m() - h2_appo.m() )
+             # the dR selection makes a difference between dR1 and dR2
+             # so I have to treat them differently
+             # pretty ugly in the code since then I do it again later, will clean it up
              if h1_appo.pt > h2_appo.pt:
                   dR_h1_appo = dR(bjets[i_h1_j1], bjets[i_h1_j2_appo])
                   dR_h2_appo = dR(bjets[i_h2_appo[0]], bjets[i_h2_appo[1]])
@@ -110,7 +114,7 @@ for index, row in data.iterrows():
           bjets_event = []        
           # increase the number of events        
           n_events+=1 
-     if row["typ"]==4 and row["btag"]>0 and row["pt"]>40:
+     if row["typ"]==4 and row["btag"]>0 and row["pt"]>40 and row["eta"]<2.5:
           n_bjets+=1
           n = set_lv(row["pt"], row["eta"], row["phi"], row["jmas"])
           bjets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))
