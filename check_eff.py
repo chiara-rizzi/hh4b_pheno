@@ -27,7 +27,8 @@ data = pd.read_csv(args.file, sep="\s+")
 n_events=0
 n_bjets=0 # count the number of b-tagged jets, to be set to zero at each event
 n_events_4b=0 # number of events with 4b
-n_events_dR=0 # number of events with 4b
+n_events_dR=0 # number of events that pass dR selection
+n_events_pT=0 # number of events that pass pT selection
 bjets_event = [] # list of lorentz vectors of the b-jets in the event
 
 def pair_jets(bjets):
@@ -92,6 +93,14 @@ def pass_dR(dR_h1, dR_h2, m4j, do_print=False):
                     return True
      return False
 
+
+def pass_pT(h1, h2):
+     m4j = (h1+h2).m()
+     if h1.pt > 0.5*m4j - 103:
+          if h2.pt > 0.33*m4j - 73:
+               return True
+     return False
+
 # loop on all the particles
 for index, row in data.iterrows():
     #if n_events>500: break
@@ -109,6 +118,8 @@ for index, row in data.iterrows():
                dR_h2 =  dR(bjets_event[i_h2[0]], bjets_event[i_h2[1]])
                if pass_dR(dR_h1, dR_h2, m4j):
                     n_events_dR +=1
+                    if pass_pT(h1, h2):
+                         n_events_pT +=1
           # it's a new event! set event-by-event counters to zero 
           n_bjets=0 
           bjets_event = []        
@@ -121,14 +132,17 @@ for index, row in data.iterrows():
           
 # For the way my code is setup, the counter n_events_4b is increased on the following event. 
 # This means that for the last event we need to make the check (and in case increase the counter) outside the loop
-if n_bjets >=4:
-     n_events_4b+=1
-        
+# Will put this back later on
+#if n_bjets >=4:
+#     n_events_4b+=1
 
+# for the way the code is set up, I'm disregardin the last event        
+n_events = n_events-1.0
 print("N events: "+str(n_events))
 print("N events >=4 b-jets pt>40 GeV: "+str(n_events_4b))
 print("N events dR: "+str(n_events_dR))
 print("Acc x Eff 4b:", 1.0*n_events_4b/n_events * 1/(0.58*0.58))
 print("Acc x Eff dR:", 1.0*n_events_dR/n_events * 1/(0.58*0.58))
+print("Acc x Eff pT:", 1.0*n_events_pT/n_events * 1/(0.58*0.58))
 
 
