@@ -125,21 +125,46 @@ def pass_eta(h1, h2):
           return True
      return False
 
-def pass_Xhh(h1, h2, do_print=True):          
-     first = (h1.m()-120)/(0.1*h1.m())
-     second = (h2.m()-110)/(0.1*h2.m())
+def pass_Xhh(h1, h2, do_print=False):          
+
+     m1 = h1.m()*(h1.m()>h2.m()) + h2.m()*(h2.m()>h1.m())
+     m2 = h2.m()*(h1.m()>h2.m()) + h1.m()*(h2.m()>h1.m())
+
+     first = (m1-120)/(0.1*m1)
+     second = (m2-110)/(0.1*m2)
      Xhh = math.sqrt( first*first + second*second)
      if do_print:
           print('h1.pT',h1.pt)
           print('h2.pT',h2.pt)
-          print('h1.m',h1.m())
-          print('h2.m',h2.m())
+          print('h1.m',m1)
+          print('h2.m',m2)
           print('first',first)
           print('second',second)
           print('Xhh',Xhh,'\n')
      if Xhh < 1.6:
           return True
      return False
+
+# in this function there is some redundancy in the loops but it should be ok
+def pass_XWt(index, index_map, jets):
+     # loop on higgs bosons constituents 
+     for i1_b in [i for sub in index for i in sub]:
+          i1 = index_map[i1_b] # position of higgs constituent in jet vector
+          list_i2 = [x for x in range(len(jets)) if x != i1]
+          for i2 in list_i2:
+               list_i3 = [x for x in range(len(jets)) if x != i1 and x != i2]
+               for i3 in list_i3:
+                    W = jets[i2]+jets[i3] # assume that the b from top is the one in the Higgs candidate. 
+                    # Not like in paper but we don't have b-tagging score
+                    mW = W.m()
+                    top = W + jets[i1]
+                    mtop = top.m()
+                    first = (mW -80)/(0.1*mW)
+                    second = (mtop - 173)/(0.1*mtop)
+                    XWt = math.sqrt( first*first + second*second  )
+                    if XWt < 1.5:
+                         return False
+     return True
 
 # loop on all the particles
 for index, row in data.iterrows():
@@ -164,16 +189,22 @@ for index, row in data.iterrows():
                               n_events['eta'] +=1
                               if pass_Xhh(h1,h2):
                                    n_events['Xhh'] +=1
+                                   if pass_XWt((i_h1, i_h2), index_map, jets_event):
+                                        n_events['XWt'] +=1
           # it's a new event! set event-by-event counters to zero 
           n_bjets=0 
-          bjets_event = []        
+          bjets_event = [] # b-tagged jets in the event       
+          jets_event = []  # all jets in the event
+          index_map = dict() # index_map[i-bjet]=i-jet position of b-jet b-jet in vector of jets  
           # increase the number of events        
           n_events['tot']+=1 
-     if row["typ"]==4 and row["btag"]>0 and row["pt"]>40 and row["eta"]<2.5:
-          n_bjets+=1
-          n = set_lv(row["pt"], row["eta"], row["phi"], row["jmas"])
-          bjets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))
-          
+     if row["typ"]==4:
+          n = set_lv(row["pt"], row["eta"], row["phi"], row["jmas"])    
+          jets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))      
+          if  row["btag"]>0 and row["pt"]>40 and row["eta"]<2.5:
+               n_bjets+=1
+               bjets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))
+               index_map[len(bjets_event)-1]=len(jets_event)-1
 # For the way my code is setup, the counter n_events_4b is increased on the following event. 
 # This means that for the last event we need to make the check (and in case increase the counter) outside the loop
 # Will put this back later on
