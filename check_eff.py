@@ -33,12 +33,12 @@ eff={}
 eff['atlas']={}
 eff['us']={}
 eff['atlas']['tot']=1
-eff['atlas']['4b']=0.49
-eff['atlas']['dR']=0.445
-eff['atlas']['pT']=0.42
-eff['atlas']['eta']=0.37
-eff['atlas']['Xhh']=0.19
-eff['atlas']['XWt']=0.175
+eff['atlas']['4b']=0.049
+eff['atlas']['dR']=0.0445
+eff['atlas']['pT']=0.042
+eff['atlas']['eta']=0.037
+eff['atlas']['Xhh']=0.019
+eff['atlas']['XWt']=0.0175
 
 
 
@@ -120,8 +120,24 @@ def pass_pT(h1, h2):
                return True
      return False
 
-def pass_dEta(h1, h2):
+def pass_eta(h1, h2):
      if math.fabs(h1.eta - h2.eta) < 1.5:
+          return True
+     return False
+
+def pass_Xhh(h1, h2, do_print=True):          
+     first = (h1.m()-120)/(0.1*h1.m())
+     second = (h2.m()-110)/(0.1*h2.m())
+     Xhh = math.sqrt( first*first + second*second)
+     if do_print:
+          print('h1.pT',h1.pt)
+          print('h2.pT',h2.pt)
+          print('h1.m',h1.m())
+          print('h2.m',h2.m())
+          print('first',first)
+          print('second',second)
+          print('Xhh',Xhh,'\n')
+     if Xhh < 1.6:
           return True
      return False
 
@@ -144,8 +160,10 @@ for index, row in data.iterrows():
                     n_events['dR'] +=1
                     if pass_pT(h1, h2):
                          n_events['pT'] +=1
-                         if pass_dEta(h1,h2):
+                         if pass_eta(h1,h2):
                               n_events['eta'] +=1
+                              if pass_Xhh(h1,h2):
+                                   n_events['Xhh'] +=1
           # it's a new event! set event-by-event counters to zero 
           n_bjets=0 
           bjets_event = []        
@@ -182,5 +200,5 @@ print('\nRelative to previous selection')
 for i in range(1,len(labels)):
      l = labels[i]
      l_prev=labels[i-1]
-     if eff['us'][l_prev] >0:          
+     if eff['us'][l_prev] > 0:          
           print(l,"  atlas:",eff['atlas'][l]/eff['atlas'][l_prev],'   us:',eff['us'][l]/eff['us'][l_prev])
