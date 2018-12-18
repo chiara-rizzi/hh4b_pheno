@@ -45,9 +45,16 @@ def pair_jets(bjets):
              i_h2_appo = [i_h2_j1_appo, i_h2_j2_appo]
              h2_appo = bjets[i_h2_appo[0]] + bjets[i_h2_appo[1]]
              diff_appo = math.fabs(h1_appo.m() - h2_appo.m() )
-             if diff_appo < diff:x
-             #if True:
-                  if  pass_dR(dR(bjets[i_h1_j1], bjets[i_h1_j2_appo]), dR(bjets[i_h2_appo[0]], bjets[i_h2_appo[1]]), (h1_appo+h2_appo).m()):
+             if diff_appo < diff:
+                  #if True:
+                  if h1_appo.pt > h2_appo.pt:
+                       dR_h1_appo = dR(bjets[i_h1_j1], bjets[i_h1_j2_appo])
+                       dR_h2_appo = dR(bjets[i_h2_appo[0]], bjets[i_h2_appo[1]])
+                  else:
+                       dR_h2_appo = dR(bjets[i_h1_j1], bjets[i_h1_j2_appo])
+                       dR_h1_appo = dR(bjets[i_h2_appo[0]], bjets[i_h2_appo[1]])                       
+                  m4j_appo = (h1_appo+h2_appo).m()
+                  if  pass_dR(dR_h1_appo, dR_h2_appo, m4j_appo):
                        diff = diff_appo
                        i_h1 = 0, i_h1_j2_appo
                        i_h2 = i_h2_appo[0], i_h2_appo[1]
@@ -56,7 +63,7 @@ def pair_jets(bjets):
     #if diff > 999998:
     #     print("no good match")
     #     no_good+=1
-    if h1.m() > h2.m():
+    if h1.pt > h2.pt:
          return i_h1, i_h2
     else:
          return i_h2, i_h1
@@ -87,7 +94,7 @@ for index, row in data.iterrows():
           if n_events%5000==0:
                print("Looking at event: "+str(n_events))
           # just finished previous event: check if it had >= 4 b-tagged jets, and compute quantities 
-          if n_bjets >=4:
+          if n_bjets ==4:
                n_events_4b+=1
                i_h1, i_h2 = pair_jets(bjets_event) 
                h1 = bjets_event[i_h1[0]] + bjets_event[i_h1[1]]
