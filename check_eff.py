@@ -170,8 +170,8 @@ for index, row in data.iterrows():
           if n_events['tot']%5000==0:
                print("Looking at event: "+str(n_events['tot']))
           # just finished previous event: check if it had >= 4 b-tagged jets, and compute quantities 
-          #if (not args.exactly4b and n_bjets >=4) or n_bjets==4:
-          if len(jets_event)<5 and n_bjets==4:
+          if (not args.exactly4b and n_bjets >=4) or n_bjets==4:
+          #if len(jets_event)<5 and n_bjets==4:
                n_events['4b']+=1
                i_h1, i_h2 = pair_jets(bjets_event) 
                h1 = bjets_event[i_h1[0]] + bjets_event[i_h1[1]]
