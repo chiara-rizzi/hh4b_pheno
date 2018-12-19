@@ -1,3 +1,5 @@
+# chiara: I should not assume that the first b-jet is used
+
 import argparse
 import os
 import numpy as np
@@ -7,7 +9,8 @@ import math
 
 parser=argparse.ArgumentParser()
 parser.add_argument("-f","--file",help="file name", type=str, default="ggHH_smallR-jets.lhco")
-parser.add_argument("-4bex","--exactly4b", help="select only events with exactly 4b (as opposed to >= 4b)", type=int, default=0)
+parser.add_argument("-4bex","--exactly4b", help="select only events with exactly 4b (as opposed to >= 4b)", action='store_true')
+parser.add_argument("-d","--debug", help="add debug statements", action='store_true')
 args=parser.parse_args()
 
 print("Ciao! :) ")
@@ -46,11 +49,13 @@ eff['atlas']['XWt']=0.0175
 n_bjets=0 # count the number of b-tagged jets, to be set to zero at each event
 bjets_event = [] # list of lorentz vectors of the b-jets in the event
 jets_event = [] # list of lorentz vectors of the jets in the event
+index_map = dict()
+rows_list_event = []
 
 def mass_diff(m1, m2):
      return math.fabs( m1 - (110./120.)*m2  )
 
-def pair_jets(bjets):
+def pair_jets(bjets, debug=False):
     #print("bjets[0].pt",bjets[0].pt)
     i_h1 = (0,0)
     i_h2 = (0,0)
@@ -80,10 +85,18 @@ def pair_jets(bjets):
                   m2_appo = h2_appo.m()
              m4j_appo = (h1_appo+h2_appo).m()
              diff_appo = mass_diff(m1_appo, m2_appo)
+             if debug:
+                  print(" ",i_h1_j1, i_h1_j2_appo, i_h2_appo[0], i_h2_appo[1])
+                  print("   ","m4j_appo:",m4j_appo )
+                  print("   ","diff_appo:",diff_appo )
              # consider only the pairings that satisfy the dR selecion
-             if  pass_dR(dR_h1_appo, dR_h2_appo, m4j_appo):
+             if  pass_dR(dR_h1_appo, dR_h2_appo, m4j_appo, debug):
+                  if debug:
+                       print("   ","pass dR")
                   # choose the one with the smallest mass difference
                   if diff_appo < diff:
+                       if debug:
+                            print("   ","new minimum")
                        diff = diff_appo
                        i_h1 = 0, i_h1_j2_appo
                        i_h2 = i_h2_appo[0], i_h2_appo[1]
@@ -100,12 +113,18 @@ def pair_jets(bjets):
 def dR(j1, j2):
     deta = j1.eta - j2.eta
     dphi = j1.phi - j2.phi
+    #print("dphi before change:",dphi)
+    if dphi >= math.pi:
+         dphi = dphi - (2*math.pi)
+    if dphi < -math.pi:
+         dphi = dphi + 2*math.pi
+    #print("dphi after change:",dphi)
     return math.sqrt(deta*deta+dphi*dphi)
 
 def pass_dR(dR_h1, dR_h2, m4j, do_print=False):
      if do_print:
-          print("dR_h1",dR_h1,"   dR_h2",dR_h2)
-          print("m4j",m4j)
+          print("   ","dR_h1",dR_h1,"   dR_h2",dR_h2)
+          print("   ","m4j",m4j)
      if m4j < 1250:
           if (360./m4j) - 0.5 < dR_h1 and dR_h1 < (653./m4j) + 0.475:
                if (235./m4j) < dR_h2 and dR_h2 < (875./m4j) + 0.35: 
@@ -172,15 +191,34 @@ def pass_XWt(index, index_map, jets):
 
 # loop on all the particles
 for index, row in data.iterrows():
-    #if n_events>500: break
-     if row['#']==0:
+     # debugging, just look at a few events
+     if not row['#']==0:
+          rows_list_event.append(row)
+     if args.debug:
+          if n_events['4b'] > 10:
+               break
+     if row["typ"]==4:
+          n = set_lv(row["pt"], row["eta"], row["phi"], row["jmas"])    
+          jets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))      
+          if  row["btag"]>0 and row["pt"]>40 and row["eta"]<2.5:
+               n_bjets+=1
+               bjets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))
+               index_map[len(bjets_event)-1]=len(jets_event)-1
+     # I know that I've read an entire event when row['#']==0 (except the first one) or I'm looking at the last entry 
+     if index>0 and (row['#']==0 or index == len(data.index)-1): 
           if n_events['tot']%5000==0:
                print("Looking at event: "+str(n_events['tot']))
           # just finished previous event: check if it had >= 4 b-tagged jets, and compute quantities 
           if (not args.exactly4b and n_bjets >=4) or n_bjets==4:
           #if len(jets_event)<5 and n_bjets==4:
+               if args.debug:
+                    print('\nNew Event! Here it is:')
+                    data_event = pd.DataFrame(rows_list_event)   
+                    print(data_event)
                n_events['4b']+=1
-               i_h1, i_h2 = pair_jets(bjets_event) 
+               i_h1, i_h2 = pair_jets(bjets_event, args.debug) 
+               if args.debug:
+                    print(" ","selected index:",i_h1, i_h2)
                h1 = bjets_event[i_h1[0]] + bjets_event[i_h1[1]]
                h2 = bjets_event[i_h2[0]] + bjets_event[i_h2[1]]
                m4j = (h1+h2).m()
@@ -203,13 +241,9 @@ for index, row in data.iterrows():
           index_map = dict() # index_map[i-bjet]=i-jet position of b-jet b-jet in vector of jets  
           # increase the number of events        
           n_events['tot']+=1 
-     if row["typ"]==4:
-          n = set_lv(row["pt"], row["eta"], row["phi"], row["jmas"])    
-          jets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))      
-          if  row["btag"]>0 and row["pt"]>40 and row["eta"]<2.5:
-               n_bjets+=1
-               bjets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))
-               index_map[len(bjets_event)-1]=len(jets_event)-1
+          rows_list_event = []
+
+
 # For the way my code is setup, the counter n_events_4b is increased on the following event. 
 # This means that for the last event we need to make the check (and in case increase the counter) outside the loop
 # Will put this back later on
@@ -217,7 +251,7 @@ for index, row in data.iterrows():
 #     n_events_4b+=1
 
 # for the way the code is set up, I'm disregardin the last event        
-n_events['tot'] = n_events['tot']-1.0
+#n_events['tot'] = n_events['tot']-1.0
 
 
 print('\nNumber of events')
