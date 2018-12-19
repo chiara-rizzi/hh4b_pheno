@@ -192,8 +192,8 @@ def pass_XWt(index, index_map, jets):
 # loop on all the particles
 for index, row in data.iterrows():
      # debugging, just look at a few events
-     if not row['#']==0:
-          rows_list_event.append(row)
+     #if not row['#']==0:
+     rows_list_event.append(row)
      if args.debug:
           if n_events['4b'] > 10:
                break
@@ -264,11 +264,11 @@ for l in labels:
           eff['us'][l]=1
      else:
           eff['us'][l]=1.0*n_events[l]/n_events['tot']* 1/(0.58*0.58)
-          print(l,"  atlas:",eff['atlas'][l],'   us:',eff['us'][l])
+          print(l,"  atlas:", "{0:.3f}".format(eff['atlas'][l]),'   us:', "{0:.3f}".format(eff['us'][l]))
 
-print('\nRelative to previous selection')
+print('\nEfficiency relative to previous selection')
 for i in range(1,len(labels)):
      l = labels[i]
      l_prev=labels[i-1]
      if eff['us'][l_prev] > 0:          
-          print(l,"  atlas:",eff['atlas'][l]/eff['atlas'][l_prev],'   us:',eff['us'][l]/eff['us'][l_prev])
+          print(l,"  atlas:","{0:.2f}".format(eff['atlas'][l]/eff['atlas'][l_prev]),'   us:',"{0:.2f}".format(eff['us'][l]/eff['us'][l_prev]))
