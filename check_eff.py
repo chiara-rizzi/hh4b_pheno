@@ -47,6 +47,9 @@ n_bjets=0 # count the number of b-tagged jets, to be set to zero at each event
 bjets_event = [] # list of lorentz vectors of the b-jets in the event
 jets_event = [] # list of lorentz vectors of the jets in the event
 
+def mass_diff(m1, m2):
+     return math.fabs( m1 - (110./120.)*m2  )
+
 def pair_jets(bjets):
     #print("bjets[0].pt",bjets[0].pt)
     i_h1 = (0,0)
@@ -62,17 +65,21 @@ def pair_jets(bjets):
         for i_h2_j2_appo in i_h2_list[1:]:             
              i_h2_appo = [i_h2_j1_appo, i_h2_j2_appo]
              h2_appo = bjets[i_h2_appo[0]] + bjets[i_h2_appo[1]]
-             diff_appo = math.fabs(h1_appo.m() - h2_appo.m() )
              # the dR selection makes a difference between dR1 and dR2
              # so I have to treat them differently
              # pretty ugly in the code since then I do it again later, will clean it up
              if h1_appo.pt > h2_appo.pt:
                   dR_h1_appo = dR(bjets[i_h1_j1], bjets[i_h1_j2_appo])
                   dR_h2_appo = dR(bjets[i_h2_appo[0]], bjets[i_h2_appo[1]])
+                  m1_appo = h1_appo.m()
+                  m2_appo = h2_appo.m()
              else:
                   dR_h2_appo = dR(bjets[i_h1_j1], bjets[i_h1_j2_appo])
                   dR_h1_appo = dR(bjets[i_h2_appo[0]], bjets[i_h2_appo[1]])                       
+                  m1_appo = h2_appo.m()
+                  m2_appo = h2_appo.m()
              m4j_appo = (h1_appo+h2_appo).m()
+             diff_appo = mass_diff(m1_appo, m2_appo)
              # consider only the pairings that satisfy the dR selecion
              if  pass_dR(dR_h1_appo, dR_h2_appo, m4j_appo):
                   # choose the one with the smallest mass difference
