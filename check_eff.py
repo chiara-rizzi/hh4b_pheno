@@ -200,7 +200,7 @@ for index, row in data.iterrows():
      if row["typ"]==4:
           n = set_lv(row["pt"], row["eta"], row["phi"], row["jmas"])    
           jets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))      
-          if  row["btag"]>0 and row["pt"]>40 and row["eta"]<2.5:
+          if  row["btag"]>0 and row["pt"]>40 and math.fabs(row["eta"])<2.5:
                n_bjets+=1
                bjets_event.append(lorentz.FourMomentum(n[0],n[1],n[2], n[3]))
                index_map[len(bjets_event)-1]=len(jets_event)-1
